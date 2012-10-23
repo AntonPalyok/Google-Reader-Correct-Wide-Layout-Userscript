@@ -1,9 +1,11 @@
+// ==UserScript==
 // @name        Google Reader Correct Wide Layout
 // @description Script changes the GoogleReader's layout and shows content of article at the right part of the screen in a separate container.
 // @namespace   https://github.com/AntonPalyok
 // @author      Anton Palyok
 // @version     1.2
 // @include     http*://www.google.*/reader/view/*
+// ==/UserScript==
 
 (function(window) {
 
