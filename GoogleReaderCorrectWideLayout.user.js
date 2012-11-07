@@ -3,7 +3,7 @@
 // @description Script changes the GoogleReader's layout and shows content of article at the right part of the screen in a separate container.
 // @namespace   https://github.com/AntonPalyok
 // @author      Anton Palyok
-// @version     1.2
+// @version     1.3
 // @include     http*://www.google.*/reader/view/*
 // ==/UserScript==
 
@@ -36,31 +36,58 @@
 
 	// catch onclick and draw article content
 	var entries = entitiesContainer.find(".samedir").find("#entries");
-
+	
 	entries.on("DOMNodeInserted", function(e) {			
-		var elem = $(e.target);
+		var elem = $(e.target); //particular entry on right part
+		
+		if (elem.hasClass("entry")) {		
+			elem.on("click", function(e) {
+				// Move elements to the right part if they were not moved.
+				if (elem.find(".entry-container").children().length > 0) {
+					articleEntry.html("");
+					resizeArticleViewer();
+				
+					startWaitingForActionHandlers(elem);
+				}
+			});
 			
-		elem.on("DOMNodeInserted", function(e) {			
-			var mainContent = $(e.target);		
-			var className = e.target.className;
-			
-			if (className === "entry-container") {
-				articleEntry.html("");
-				resizeArticleViewer();
-			}		
-			
-			if (className === "entry-container" || className === "entry-actions") {
-				var articleEntryContainer = $("<div class=\"" + className + "\"><\/div>");
-				articleEntryContainer.html(mainContent.html())
-				articleEntry.append(articleEntryContainer);
-			
-				mainContent.css({"display":"none"});
-			}
-		});		
+			elem.on("DOMNodeInserted", function(e) {	
+				// Hide content before moving
+				var className = e.target.className;			
+				
+				if (className === "entry-container" || className === "entry-actions") {
+					e.target.style.display = "none"
+				}
+			});				
+		}		
 	});
 
+	var startWaitingForActionHandlers = function(elem, className) {		
+		var tryCount = 0;
+		var intrvl = setInterval(function(){
+			
+			// If content and actions loaded and have events then their parent gets new id
+			if (elem[0].id == "current-entry") {
+				var content = elem.find(".entry-container");
+				var actions = elem.find(".entry-actions");
+				
+				articleEntry.append($("<div class=\"entry-container\"><\/div>").append(content.children()));
+				articleEntry.append($("<div class=\"entry-actions\"><\/div>").append(actions.children()));
+				
+				clearInterval(intrvl);
+			}
+			
+			// protect from infinitive timer
+			tryCount++;
+			if (tryCount >= 10) {
+				clearInterval(intrvl);
+			}
+			
+		}, 500);
+	};
+	
 	$(window).resize(function() {
-	  resizeArticleViewer();
+		resizeArticleViewer();
 	});
 
 	var resizeArticleViewer = function(){
